@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Island Claude Task Board - Game Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #09223f 0%, #1a3a52 100%);
+            padding: 2rem 1rem;
+            color: #0b0b0b;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 16px;
+            color: rgba(255,255,255,0.8);
+        }
+        
+        /* HALL OF FAME */
+        .hall-of-fame {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+            perspective: 1000px;
+        }
+        
+        .hall-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: slideIn 0.6s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .hall-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+        }
+        
+        .medal {
+            font-size: 80px;
+            margin-bottom: 1rem;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .medal.gold { animation-delay: 0s; }
+        .medal.silver { animation-delay: 0.2s; }
+        .medal.bronze { animation-delay: 0.4s; }
+        
+        .hall-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: #09223f;
+            margin-bottom: 0.5rem;
+        }
+        
+        .hall-stats {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        
+        .hall-tier {
+            font-size: 12px;
+            font-weight: 600;
+            color: #00abaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* TIER PROGRESS BAR */
+        .tier-progress-section {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+        
+        .tier-progress-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #09223f;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .tiers-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+        
+        .tier-item {
+            flex: 1;
+            min-width: 150px;
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        
+        .tier-item:hover {
+            border-color: #00abaa;
+            background: rgba(0, 171, 172, 0.05);
+        }
+        
+        .tier-badge {
+            font-size: 32px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tier-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #09223f;
+            text-transform: uppercase;
+        }
+        
+        .tier-range {
+            font-size: 11px;
+            color: #999;
+            margin-top: 0.25rem;
+        }
+        
+        /* MAIN GRID */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* LEADERBOARD - COMPACT */
+        .leaderboard-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #09223f;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: #f9f9f9;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .leaderboard-item:hover {
+            background: #f0f0f0;
+            border-left-color: #00abaa;
+        }
+        
+        .rank-badge {
+            font-size: 20px;
+            font-weight: 700;
+            min-width: 32px;
+            text-align: center;
+        }
+        
+        .rank-badge.first { color: #ffd700; }
+        .rank-badge.second { color: #c0c0c0; }
+        .rank-badge.third { color: #cdaa7d; }
+        
+        .leaderboard-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .leaderboard-name {
+            font-weight: 600;
+            font-size: 13px;
+            color: #09223f;
+        }
+        
+        .leaderboard-progress {
+            font-size: 11px;
+            color: #999;
+            margin-top: 0.25rem;
+        }
+        
+        .tier-badge-small {
+            font-size: 18px;
+            min-width: 24px;
+        }
+        
+        /* STATS SIDEBAR */
+        .stats-box {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            margin-bottom: 2rem;
+        }
+        
+        .stat-item {
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #00abaa;
+        }
+        
+        .stat-detail {
+            font-size: 12px;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+        
+        /* TASKS SECTION */
+        .tasks-section {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+        
+        .tasks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .task-card {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        
+        .task-card:hover {
+            border-color: #00abaa;
+            box-shadow: 0 8px 24px rgba(0, 171, 172, 0.15);
+        }
+        
+        .task-number {
+            font-size: 11px;
+            color: #999;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        
+        .task-text {
+            font-size: 13px;
+            color: #09223f;
+            font-weight: 600;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+        
+        .task-progress {
+            margin-bottom: 0.75rem;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00abaa, #008b8c);
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+        
+        .progress-label {
+            font-size: 11px;
+            color: #999;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .add-person-input {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1.5rem;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1.5px solid #00abaa;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #00abaa;
+            box-shadow: 0 0 0 3px rgba(0, 171, 172, 0.1);
+        }
+        
+        button {
+            padding: 8px 16px;
+            background: #00abaa;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        
+        button:hover {
+            background: #008b8c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 171, 172, 0.3);
+        }
+        
+        .celebration {
+            animation: celebrate 0.6s ease-out;
+        }
+        
+        @keyframes celebrate {
+            0% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.2) rotate(5deg);
+                opacity: 0;
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .hall-of-fame {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .scrollable {
+            overflow-y: auto;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #00abaa;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #008b8c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Claude Task Board</h1>
+            <p>Complete tasks • Climb the leaderboard • Become a Claude Champion</p>
+        </div>
+        
+        <!-- HALL OF FAME -->
+        <div style="margin-bottom: 2rem;">
+            <div style="font-size: 24px; font-weight: 700; color: white; margin-bottom: 1.5rem; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">🏆 Hall of Fame</div>
+            <div class="hall-of-fame" id="hallOfFame">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+        
+        <!-- TIER PROGRESS -->
+        <div class="tier-progress-section">
+            <div class="tier-progress-label">📊 Tier Journey</div>
+            <div class="tiers-bar">
+                <div class="tier-item">
+                    <div class="tier-badge">🌱</div>
+                    <div class="tier-name">Newcomer</div>
+                    <div class="tier-range">1–5</div>
+                </div>
+                <div class="tier-item">
+                    <div class="tier-badge">📚</div>
+                    <div class="tier-name">Practitioner</div>
+                    <div class="tier-range">6–11</div>
+                </div>
+                <div class="tier-item">
+                    <div class="tier-badge">⭐</div>
+                    <div class="tier-name">Expert</div>
+                    <div class="tier-range">12–16</div>
+                </div>
+                <div class="tier-item">
+                    <div class="tier-badge">👑</div>
+                    <div class="tier-name">Master</div>
+                    <div class="tier-range">17–19</div>
+                </div>
+                <div class="tier-item">
+                    <div class="tier-badge">🚀</div>
+                    <div class="tier-name">Champion</div>
+                    <div class="tier-range">20</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-grid">
+            <!-- LEADERBOARD -->
+            <div class="leaderboard-card">
+                <div class="card-title">🏆 Top 10 Leaderboard</div>
+                
+                <div class="leaderboard-list scrollable" id="leaderboard">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            
+            <!-- STATS -->
+            <div>
+                <div class="stats-box">
+                    <div class="card-title">⚡ Live Stats</div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-label">Team Size</div>
+                        <div class="stat-value" id="statTeamSize">0</div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-label">Total Tasks</div>
+                        <div class="stat-value" id="statTotalTasks">0</div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-label">🔥 Hottest Task</div>
+                        <div class="stat-detail" id="statHottestTask">Waiting for data...</div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-label">🚀 Closest to Champion</div>
+                        <div class="stat-detail" id="statClosest">Waiting for data...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TASKS -->
+        <div class="tasks-section">
+            <div class="card-title">✅ Complete Tasks to Climb the Board</div>
+            <div class="tasks-grid" id="tasksGrid">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const TASKS = [
+            "Use Claude to search and summarize emails by topic",
+            "Find a free time slot in everyone's calendar for a meeting",
+            "Draft a professional email response using Claude",
+            "Summarize a long email thread with Claude",
+            "Create a meeting agenda using Claude",
+            "Draft a professional letter or memo",
+            "Create a meeting notes summary",
+            "Analyze customer/staff feedback and suggest improvements",
+            "Create a process flowchart for a business task",
+            "Analyze data from an Excel file and create insights",
+            "Create a presentation outline or slide content",
+            "Brainstorm ideas for a project or campaign using Claude",
+            "Create a budget breakdown or financial analysis",
+            "Research a topic and summarize findings with Claude",
+            "Draft an apology or difficult message professionally",
+            "Create a checklist or task list for a project",
+            "Explain a complex topic in simple terms using Claude",
+            "Generate alternative solutions to a business problem",
+            "Create a comparison analysis (tools, options, vendors, etc.)",
+            "Create an FAQ document for your team/department using Claude"
+        ];
+        
+        const INITIAL_PEOPLE = [
+            "Ali", "Anne-Marie", "Arnold", "Barbara", "Barry", "Carleen", "Christine", "Ciara",
+            "Debbie", "Donna", "Glen", "Gosia", "James", "Jayne", "Julie H", "Julie Mc",
+            "Kellie", "Kerry", "Laura", "Louise", "Sara L", "Sarah C", "Wendy"
+        ];
+        
+        let people = [];
+        let taskCompletion = {};
+        
+        function getTier(count) {
+            if (count === 20) return { name: 'Claude Champion', badge: '🚀' };
+            if (count >= 17) return { name: 'Master', badge: '👑' };
+            if (count >= 12) return { name: 'Expert', badge: '⭐' };
+            if (count >= 6) return { name: 'Practitioner', badge: '📚' };
+            if (count >= 1) return { name: 'Newcomer', badge: '🌱' };
+            return { name: 'Learner', badge: '🔰' };
+        }
+        
+        function saveData() {
+            localStorage.setItem('people', JSON.stringify(people));
+            localStorage.setItem('taskCompletion', JSON.stringify(taskCompletion));
+        }
+        
+        function loadData() {
+            const savedPeople = localStorage.getItem('people');
+            const savedTasks = localStorage.getItem('taskCompletion');
+            
+            if (savedPeople) {
+                people = JSON.parse(savedPeople);
+            } else {
+                people = [...INITIAL_PEOPLE];
+                INITIAL_PEOPLE.forEach(person => {
+                    taskCompletion[person] = {};
+                    TASKS.forEach((_, i) => {
+                        taskCompletion[person][i] = false;
+                    });
+                });
+            }
+            
+            if (savedTasks) {
+                taskCompletion = JSON.parse(savedTasks);
+            } else {
+                people.forEach(person => {
+                    if (!taskCompletion[person]) {
+                        taskCompletion[person] = {};
+                        TASKS.forEach((_, i) => {
+                            taskCompletion[person][i] = false;
+                        });
+                    }
+                });
+            }
+        }
+        
+        function addPerson() {
+            const input = document.getElementById('newPersonInput');
+            const name = input.value.trim();
+            if (!name || people.includes(name)) {
+                input.value = '';
+                return;
+            }
+            
+            people.push(name);
+            taskCompletion[name] = {};
+            TASKS.forEach((_, i) => {
+                taskCompletion[name][i] = false;
+            });
+            saveData();
+            render();
+            input.value = '';
+        }
+        
+        function toggleTask(personName, taskIndex) {
+            taskCompletion[personName][taskIndex] = !taskCompletion[personName][taskIndex];
+            saveData();
+            render();
+        }
+        
+        function getTaskCount(personName) {
+            return Object.values(taskCompletion[personName] || {}).filter(Boolean).length;
+        }
+        
+        function getTaskProgress(taskIndex) {
+            const completed = people.filter(p => taskCompletion[p] && taskCompletion[p][taskIndex]).length;
+            return Math.round((completed / people.length) * 100);
+        }
+        
+        function render() {
+            renderHallOfFame();
+            renderLeaderboard();
+            renderTasks();
+            updateStats();
+        }
+        
+        function renderHallOfFame() {
+            const sorted = [...people].sort((a, b) => getTaskCount(b) - getTaskCount(a));
+            const top3WithTasks = sorted.filter(p => getTaskCount(p) > 0).slice(0, 3);
+            const medals = ['🥇', '🥈', '🥉'];
+            
+            const hall = document.getElementById('hallOfFame');
+            
+            // Create 3 cards total - fill with data or blank
+            let hallHTML = '';
+            for (let idx = 0; idx < 3; idx++) {
+                if (idx < top3WithTasks.length) {
+                    const person = top3WithTasks[idx];
+                    const count = getTaskCount(person);
+                    const tier = getTier(count);
+                    hallHTML += `
+                        <div class="hall-card">
+                            <div class="medal ${['gold', 'silver', 'bronze'][idx]}">${medals[idx]}</div>
+                            <div class="hall-name">${person}</div>
+                            <div class="hall-stats">${count} ${count === 1 ? 'task' : 'tasks'}</div>
+                            <div class="hall-tier">${tier.badge} ${tier.name}</div>
+                        </div>
+                    `;
+                } else {
+                    // Blank card
+                    hallHTML += `
+                        <div class="hall-card" style="opacity: 0.5; border: 2px dashed #ccc;">
+                            <div class="medal">${medals[idx]}</div>
+                            <div class="hall-name" style="color: #ccc;">Coming soon...</div>
+                            <div class="hall-stats" style="color: #ccc;">Waiting for first tasks</div>
+                        </div>
+                    `;
+                }
+            }
+            hall.innerHTML = hallHTML;
+        }
+        
+        function renderLeaderboard() {
+            const sorted = [...people].sort((a, b) => getTaskCount(b) - getTaskCount(a));
+            const top10 = sorted.slice(0, 10);
+            
+            const lb = document.getElementById('leaderboard');
+            lb.innerHTML = top10.map((person, idx) => {
+                const count = getTaskCount(person);
+                const tier = getTier(count);
+                const rankClass = idx < 3 ? ['first', 'second', 'third'][idx] : '';
+                
+                return `
+                    <div class="leaderboard-item">
+                        <div class="rank-badge ${rankClass}">#${idx + 1}</div>
+                        <div class="leaderboard-info">
+                            <div class="leaderboard-name">${person}</div>
+                            <div class="leaderboard-progress">${count} / 20 tasks</div>
+                        </div>
+                        <div class="tier-badge-small">${tier.badge}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function renderTasks() {
+            const grid = document.getElementById('tasksGrid');
+            grid.innerHTML = TASKS.map((task, idx) => {
+                const progress = getTaskProgress(idx);
+                const completedCount = people.filter(p => taskCompletion[p] && taskCompletion[p][idx]).length;
+                
+                const checkboxes = people.map(person => {
+                    const isChecked = taskCompletion[person] && taskCompletion[person][idx];
+                    return `
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; padding: 4px 0; margin: 4px 0;">
+                            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleTask('${person}', ${idx})" style="cursor: pointer;">
+                            ${person}
+                        </label>
+                    `;
+                }).join('');
+                
+                return `
+                    <div class="task-card">
+                        <div class="task-number">Task ${idx + 1}</div>
+                        <div class="task-text">${task}</div>
+                        <div class="task-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progress}%"></div>
+                            </div>
+                            <div class="progress-label">
+                                <span>${progress}% done</span>
+                                <span>${completedCount}/${people.length}</span>
+                            </div>
+                        </div>
+                        <div style="font-size: 11px; color: #999; margin-top: 1rem; max-height: 120px; overflow-y: auto;">
+                            ${checkboxes}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function updateStats() {
+            const totalTasks = Object.values(taskCompletion).reduce((sum, person) => {
+                return sum + Object.values(person).filter(Boolean).length;
+            }, 0);
+            
+            // Hottest task
+            let hottestIdx = 0;
+            let maxProgress = 0;
+            TASKS.forEach((_, idx) => {
+                const progress = getTaskProgress(idx);
+                if (progress > maxProgress) {
+                    maxProgress = progress;
+                    hottestIdx = idx;
+                }
+            });
+            
+            // Closest to champion
+            const sorted = [...people].sort((a, b) => getTaskCount(b) - getTaskCount(a));
+            let closestName = 'No one yet';
+            let closestCount = 0;
+            sorted.slice(1, 4).forEach(person => {
+                const count = getTaskCount(person);
+                if (count > closestCount) {
+                    closestCount = count;
+                    closestName = person;
+                }
+            });
+            
+            document.getElementById('statTeamSize').textContent = people.length;
+            document.getElementById('statTotalTasks').textContent = totalTasks;
+            document.getElementById('statHottestTask').textContent = `Task ${hottestIdx + 1} (${maxProgress}%)`;
+            document.getElementById('statClosest').textContent = `${closestName} (${closestCount}/20)`;
+        }
+        
+        loadData();
+        render();
+        
+        document.getElementById('newPersonInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addPerson();
+        });
+    </script>
+</body>
+</html>
